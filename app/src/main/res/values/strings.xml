@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">哪张最美</string>
+    <string name="select_picture">SELECT PICTURE</string>
+
+    <string name="hiai_select_picture">Select Picture</string>
+    <string name="hiai_filter_title">Delete</string>
+</resources>
