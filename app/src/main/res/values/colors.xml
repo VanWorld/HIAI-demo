@@ -7,4 +7,7 @@
     <color name="toolbarTextColor">#000000</color>
     <color name="textHighlightColor">#FF4500</color>
     <color name="appBarBackground">#F5F5F5</color>
+    <color name="zoom_out_image_background">#000000</color>
+
+    <color name="item_text_view_background">#F5F5F5</color>
 </resources>

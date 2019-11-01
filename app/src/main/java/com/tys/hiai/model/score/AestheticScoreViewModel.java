@@ -1,6 +1,6 @@
 package com.tys.hiai.model.score;
 
-import com.tys.hiai.model.recycler.ScoreModel;
+import com.tys.hiai.GridFragment.ScoreModel;
 
 import java.util.LinkedList;
 

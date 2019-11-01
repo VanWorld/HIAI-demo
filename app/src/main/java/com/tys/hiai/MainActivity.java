@@ -16,15 +16,16 @@ import com.huawei.hiai.vision.image.detector.AestheticsScoreDetector;
 import com.huawei.hiai.vision.visionkit.common.Frame;
 import com.huawei.hiai.vision.visionkit.image.detector.AestheticsScore;
 import com.tys.hiai.aesthetic.VisionConnectionCallback;
-import com.tys.hiai.model.recycler.ScoreModel;
 import com.tys.hiai.model.score.AestheticScoreViewModel;
 import com.tys.hiai.util.HiAILog;
+import com.tys.hiai.GridFragment.ScoreModel;
 import com.zhihu.matisse.Matisse;
 
 import org.json.JSONObject;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -122,7 +123,8 @@ public class MainActivity extends AppCompatActivity {
                     HiAILog.i("detect result:" + jsonObject);
                     AestheticsScore aestheticsScores = detector.convertResult(jsonObject);
                     if (aestheticsScores != null) {
-                        item.setScore(aestheticsScores.getScore());
+                        item.setScore(new BigDecimal(Float.toString(aestheticsScores.getScore()))
+                                .setScale(4, BigDecimal.ROUND_HALF_UP).floatValue());
                     }
                     result.add(item);
                 }
