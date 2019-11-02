@@ -10,4 +10,9 @@
     <color name="zoom_out_image_background">#000000</color>
 
     <color name="item_text_view_background">#F5F5F5</color>
+
+    <color name="colorControlNormal">#FFFFFF</color>
+    <color name="colorControlActivated">#9C27B0</color>
+
+    <color name="alert_dialog_button">#9C27B0</color>
 </resources>

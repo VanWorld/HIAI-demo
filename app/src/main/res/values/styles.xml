@@ -14,4 +14,13 @@
         <item name="android:button">@color/textHighlightColor</item>
     </style>
 
+    <style name="CheckBoxTheme" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@color/colorControlNormal</item>
+        <item name="colorControlActivated">@color/colorControlActivated</item>
+    </style>
+
+    <style name="MyDialogTheme" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="colorPrimary">@color/alert_dialog_button</item>
+    </style>
+
 </resources>

@@ -1,6 +1,7 @@
 package com.tys.hiai;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -9,34 +10,34 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.card.MaterialCardView;
 import com.tys.hiai.engine.Glide4Engine;
-import com.tys.hiai.engine.MyGlide4Engine;
 import com.tys.hiai.model.score.AestheticScoreViewModel;
 import com.tys.hiai.util.HiAILog;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -48,111 +49,103 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 public class GridFragment extends Fragment {
+    private View gridView;
     private RecyclerView mRecyclerView;
     private AestheticAdapter mAdapter;
+    private HashMap<String, ScoreModel> selectScoreModels;
+    private Toolbar toolbar;
+    private MenuItem selectPictureMenu;
+    private MenuItem deleteMenu;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        selectScoreModels = new HashMap<>();
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.grid_fragment, container, false);
-        setUpToolbar(view);
-
-        mRecyclerView = view.findViewById(R.id.my_recycler_view);
-        mRecyclerView.setHasFixedSize(true);
-        mAdapter = new AestheticAdapter(new LinkedList<>());
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3, GridLayoutManager.VERTICAL, false));
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-//        mRecyclerView.addItemDecoration(new DividerGridItemDecoration());
-        mRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-            GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    HiAILog.i("single tap up");
-                    View childView = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
-                    HiAILog.i(childView + "");
-                    if (childView != null && childView instanceof MaterialCardView) {
-                        int pos = mRecyclerView.getChildAdapterPosition(childView);
-                        ScoreModel mScoremodel = ((AestheticAdapter)mRecyclerView.getAdapter()).getScoreModel(pos);
-                        HiAILog.i(" " + mScoremodel);
-                        ImageView imageView = view.findViewById(R.id.zoom_out_imageView);
-                        Glide.with(getContext()).load(mScoremodel.getImagePath()).into(imageView);
-                        imageView.setVisibility(View.VISIBLE);
-                        AppBarLayout appBarLayout = view.findViewById(R.id.app_bar_layout);
-                        appBarLayout.setVisibility(View.GONE);
-
-                        View decorView = getActivity().getWindow().getDecorView();
-                        int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN;
-                        decorView.setSystemUiVisibility(uiOptions);
-
-                        imageView.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                imageView.setVisibility(View.GONE);
-                                appBarLayout.setVisibility(View.VISIBLE);
-                                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-                            }
-                        });
-                        return true;
-                    }
-                    return false;
-                }
-
-                @Override
-                public void onLongPress(MotionEvent e) {
-                    HiAILog.i("long press");
-                }
-            });
-
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                return gestureDetector.onTouchEvent(e);
-            }
-
-            @Override
-            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                HiAILog.i("on touch event");
-                gestureDetector.onTouchEvent(e);
-            }
-
-            @Override
-            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-
-            }
-        });
+        gridView = inflater.inflate(R.layout.grid_fragment, container, false);
+        initToolbar(gridView);
+        initRecyclerView(gridView);
+        refreshUI(new LinkedList<>());
 
         AestheticScoreViewModel model = ViewModelProviders.of(getActivity()).get(AestheticScoreViewModel.class);
         model.getScores().observe(getActivity(), new Observer<LinkedList<ScoreModel>>() {
             @Override
             public void onChanged(LinkedList<ScoreModel> scoreModels) {
                 HiAILog.i("onChanged");
-                mAdapter.setScoreModels(scoreModels);
-                mAdapter.notifyDataSetChanged();
+                refreshUI(scoreModels);
             }
         });
-        return view;
+        return gridView;
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         super.onCreateOptionsMenu(menu, menuInflater);
         menuInflater.inflate(R.menu.hiai_toolbar_menu, menu);
-        MenuItem menuItem = menu.findItem(R.id.select_picture);
-        menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        selectPictureMenu = menu.findItem(R.id.select_picture);
+        selectPictureMenu.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 selectPhotoByMatisse();
-//                Toast.makeText(getActivity(), "hello", Toast.LENGTH_LONG).show();
                 return true;
             }
         });
+
+        deleteMenu = menu.findItem(R.id.delete);
+        deleteMenu.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (selectScoreModels == null || selectScoreModels.size() == 0) {
+                    Toast.makeText(getContext(), R.string.none_select, Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.MyDialogTheme);
+
+                String message = String.format(getActivity().getResources().getString(R.string.delete_select_count_items), selectScoreModels.size());
+                builder.setTitle(R.string.delete_select_items)
+                        .setMessage(message)
+                        .setPositiveButton(R.string.delete_confirm, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                HiAILog.i("hello, I am confirm");
+                                selectPictureMenu.setVisible(true);
+                                deleteMenu.setVisible(false);
+                                toolbar.setNavigationOnClickListener(null);
+                                toolbar.setNavigationIcon(null);
+                                toolbar.setTitle(R.string.app_name);
+
+                                for (ScoreModel item2 : selectScoreModels.values()) {
+                                    File file = new File(item2.getImagePath());
+                                    if (file.exists()) {
+                                        file.delete();
+                                    }
+                                    mAdapter.scoreModels.remove(item2);
+                                }
+                                String deleteConfirmMessage = String.format(getActivity().getResources().getString(R.string.delete_confirm_message), selectScoreModels.size());
+                                selectScoreModels.clear();
+                                mAdapter.setShowSelected(false);
+                                refreshUI(mAdapter.scoreModels);
+                                Toast.makeText(getContext(), deleteConfirmMessage, Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton(R.string.delete_cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+                return true;
+            }
+        });
+        deleteMenu.setVisible(false);
 
     }
 
@@ -169,11 +162,28 @@ public class GridFragment extends Fragment {
                 .forResult(MainActivity.REQUEST_CODE_CHOOSE);
     }
 
-    private void setUpToolbar(View view) {
-        Toolbar toolbar = view.findViewById(R.id.app_bar);
+    private void initToolbar(@NonNull View view) {
+        toolbar = view.findViewById(R.id.app_bar);
         AppCompatActivity appCompatActivity = (AppCompatActivity) getActivity();
         if (appCompatActivity != null) {
             appCompatActivity.setSupportActionBar(toolbar);
+        }
+    }
+
+    private void initRecyclerView(@NonNull View view) {
+        mRecyclerView = view.findViewById(R.id.my_recycler_view);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3, GridLayoutManager.VERTICAL, false));
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+    }
+
+    private void refreshUI(LinkedList<ScoreModel> scoreModels) {
+        if (mAdapter == null) {
+            mAdapter = new AestheticAdapter(scoreModels);
+            mRecyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.setScoreModels(scoreModels);
+            mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -182,6 +192,7 @@ public class GridFragment extends Fragment {
      */
     class AestheticAdapter extends RecyclerView.Adapter<AestheticHolder> {
         private LinkedList<ScoreModel> scoreModels;
+        private boolean showSelected = false;
 
         public AestheticAdapter(LinkedList<ScoreModel> scoreModels) {
             this.scoreModels = scoreModels;
@@ -192,12 +203,102 @@ public class GridFragment extends Fragment {
         public AestheticHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             HiAILog.i("on create view holder");
             View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
+            HiAILog.i((itemView.toString()));
             return new AestheticHolder(itemView, parent.getContext());
         }
 
         @Override
         public void onBindViewHolder(@NonNull AestheticHolder holder, int position) {
-            holder.bindData(scoreModels.get(position));
+            ScoreModel mScoremodel = scoreModels.get(position);
+            holder.bindData(mScoremodel);
+
+            if (isShowSelected() && !holder.isCheckBoxShow()) {
+                holder.checkBox.setVisibility(View.VISIBLE);
+//                holder.checkBox.setChecked(selectScoreModels.containsKey(Integer.toString(position)));
+            } else if (!isShowSelected() && holder.isCheckBoxShow()) {
+                holder.checkBox.setVisibility(View.GONE);
+                holder.checkBox.setChecked(selectScoreModels.containsKey(Integer.toString(position)));
+            }
+
+            holder.ivImage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    HiAILog.i(" " + mScoremodel);
+                    ImageView imageView = gridView.findViewById(R.id.zoom_out_imageView);
+                    Glide.with(getContext()).load(mScoremodel.getImagePath()).into(imageView);
+                    imageView.setVisibility(View.VISIBLE);
+                    AppBarLayout appBarLayout = gridView.findViewById(R.id.app_bar_layout);
+                    appBarLayout.setVisibility(View.GONE);
+
+                    View decorView = getActivity().getWindow().getDecorView();
+                    int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN;
+                    decorView.setSystemUiVisibility(uiOptions);
+
+                    imageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            imageView.setVisibility(View.GONE);
+                            appBarLayout.setVisibility(View.VISIBLE);
+                            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                        }
+                    });
+                }
+            });
+
+            holder.ivImage.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (!isShowSelected()) {
+                        showSelected = true;
+                    }
+
+                    selectPictureMenu.setVisible(false);
+                    deleteMenu.setVisible(true);
+                    toolbar.setNavigationIcon(R.drawable.ic_close);
+                    toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            selectPictureMenu.setVisible(true);
+                            deleteMenu.setVisible(false);
+                            toolbar.setNavigationOnClickListener(null);
+                            toolbar.setNavigationIcon(null);
+                            toolbar.setTitle(R.string.app_name);
+
+                            showSelected = false;
+                            selectScoreModels.clear();
+                            refreshUI(scoreModels);
+                        }
+                    });
+
+                    holder.checkBox.setVisibility(View.VISIBLE);
+                    holder.checkBox.setChecked(true);
+                    refreshUI(scoreModels);
+                    return true;
+                }
+            });
+
+            holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        selectScoreModels.put(Integer.toString(position), scoreModels.get(position));
+                    } else {
+                        selectScoreModels.remove(Integer.toString(position));
+                    }
+
+                    if (isShowSelected()) {
+                        if (selectScoreModels.size() > 0) {
+                            String newTile = getContext().getResources().getString(R.string.select_count_string);
+                            toolbar.setTitle(String.format(newTile, selectScoreModels.size()));
+                        } else {
+                            toolbar.setTitle(R.string.none_select);
+                        }
+                    }
+
+                    HiAILog.i("select models count is:" + selectScoreModels.size());
+                }
+            });
         }
 
         @Override
@@ -220,6 +321,15 @@ public class GridFragment extends Fragment {
 
             return null;
         }
+
+        public boolean isShowSelected() {
+            return this.showSelected;
+        }
+
+        public void setShowSelected(boolean showSelected) {
+            this.showSelected = showSelected;
+        }
+
     }
 
     /**
@@ -228,21 +338,50 @@ public class GridFragment extends Fragment {
     class AestheticHolder extends RecyclerView.ViewHolder {
         private ImageView ivImage;
         private TextView tvScore;
-        private Context context;
+        private CheckBox checkBox;
 
         public AestheticHolder(@NonNull View itemView, Context context) {
             super(itemView);
-            this.ivImage = (ImageView) itemView.findViewById(R.id.score_image);
-            this.tvScore = (TextView) itemView.findViewById(R.id.score);
-            this.context = context;
+            this.ivImage = itemView.findViewById(R.id.score_image);
+            this.tvScore = itemView.findViewById(R.id.score);
+            this.checkBox = itemView.findViewById(R.id.cb_item);
         }
 
         public void bindData(ScoreModel scoreModel) {
             HiAILog.i(scoreModel.toString());
-            MyGlide4Engine.loadThumbnail(context, context.getResources().getDimensionPixelOffset(R.dimen.grid_expected_size),
-                    context.getResources().getDrawable(R.drawable.ic_spinner_of_dots), this.ivImage,
-                    Uri.fromFile(new File(scoreModel.getImagePath())));
+            Glide.with(getContext()).load(scoreModel.getImagePath()).into(this.ivImage);
             this.tvScore.setText(scoreModel.getScore() + "");
+        }
+
+        public ImageView getIvImage() {
+            return ivImage;
+        }
+
+        public void setIvImage(ImageView ivImage) {
+            this.ivImage = ivImage;
+        }
+
+        public TextView getTvScore() {
+            return tvScore;
+        }
+
+        public void setTvScore(TextView tvScore) {
+            this.tvScore = tvScore;
+        }
+
+        public CheckBox getCheckBox() {
+            return checkBox;
+        }
+
+        public void setCheckBox(CheckBox checkBox) {
+            this.checkBox = checkBox;
+        }
+
+        public boolean isCheckBoxShow() {
+            if (this.checkBox.getVisibility() == View.VISIBLE) {
+                return true;
+            }
+            return false;
         }
     }
 

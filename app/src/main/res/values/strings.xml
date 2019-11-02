@@ -2,6 +2,18 @@
     <string name="app_name">哪张最美</string>
     <string name="select_picture">SELECT PICTURE</string>
 
-    <string name="hiai_select_picture">Select Picture</string>
-    <string name="hiai_filter_title">Delete</string>
+    <string name="hiai_select_picture">选择图片</string>
+    <string name="hiai_filter_title">删除</string>
+    <string name="score_image_description">图片长按多选</string>
+
+    <string name="select_count_string">选择%d张图片</string>
+    <string name="none_select">未选择图片</string>
+
+    <string name="zoom_out_image">展示原图</string>
+
+    <string name="delete_select_items">删除照片？</string>
+    <string name="delete_select_count_items">已选择%d张照片</string>
+    <string name="delete_confirm">确定</string>
+    <string name="delete_cancel">取消</string>
+    <string name="delete_confirm_message">已删除%d张照片</string>
 </resources>

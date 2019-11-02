@@ -35,6 +35,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProviders;
 
+/**
+ *
+ */
 public class MainActivity extends AppCompatActivity {
 
     public static final int REQUEST_CODE_CHOOSE = 1;
@@ -81,16 +84,18 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == REQUEST_CODE_CHOOSE && resultCode == RESULT_OK) {
             List<String> uris = Matisse.obtainPathResult(data);
-            List<ScoreModel> scoreModels = new ArrayList<>(uris.size());
-            for (String item : uris) {
-                HiAILog.i(item);
-                Bitmap bitmap = getBitmapFromPath(item);
-                ScoreModel scoreModel = new ScoreModel();
-                scoreModel.setImagePath(item);
-                scoreModel.setBitmap(bitmap);
-                scoreModels.add(scoreModel);
+            if (uris != null && uris.size() > 0) {
+                List<ScoreModel> scoreModels = new ArrayList<>(uris.size());
+                for (String item : uris) {
+                    HiAILog.i(item);
+                    Bitmap bitmap = getBitmapFromPath(item);
+                    ScoreModel scoreModel = new ScoreModel();
+                    scoreModel.setImagePath(item);
+                    scoreModel.setBitmap(bitmap);
+                    scoreModels.add(scoreModel);
+                }
+                score(scoreModels.toArray(new ScoreModel[]{}));
             }
-            score(scoreModels.toArray(new ScoreModel[]{}));
         }
     }
 
