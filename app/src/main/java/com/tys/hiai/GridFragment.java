@@ -137,7 +137,6 @@ public class GridFragment extends Fragment {
                         .setNegativeButton(R.string.delete_cancel, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
                             }
                         });
                 AlertDialog alertDialog = builder.create();
@@ -151,7 +150,8 @@ public class GridFragment extends Fragment {
 
     public void selectPhotoByMatisse() {
         Matisse.from(getActivity())
-                .choose(MimeType.ofImage())
+                .choose(MimeType.of(MimeType.JPEG, MimeType.PNG, MimeType.BMP, MimeType.WEBP))
+                .showSingleMediaType(true)
                 .countable(true)
                 .theme(R.style.Matisse_Dracula)
                 .maxSelectable(9)

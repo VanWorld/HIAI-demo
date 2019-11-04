@@ -14,5 +14,5 @@
     <color name="colorControlNormal">#FFFFFF</color>
     <color name="colorControlActivated">#9C27B0</color>
 
-    <color name="alert_dialog_button">#9C27B0</color>
+    <color name="alert_dialog_button">#FF4500</color>
 </resources>

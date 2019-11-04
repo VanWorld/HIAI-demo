@@ -116,11 +116,12 @@ public class MainActivity extends AppCompatActivity {
         for (ScoreModel item : scoreModels) {
             HiAILog.i("item: " + item);
         }
-        AestheticsScoreDetector detector = new AestheticsScoreDetector(MainActivity.this);
+
         new AsyncTask<ScoreModel, Integer, LinkedList<ScoreModel>>() {
             @Override
             protected LinkedList<ScoreModel> doInBackground(ScoreModel... scoreModels) {
                 LinkedList<ScoreModel> result = new LinkedList<>();
+                AestheticsScoreDetector detector = new AestheticsScoreDetector(MainActivity.this);
                 for (ScoreModel item : scoreModels) {
                     Frame frame = new Frame();
                     frame.setBitmap(item.getBitmap());
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     result.add(item);
                 }
-
+                detector.release();
                 return result;
             }
 
@@ -146,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }.execute(scoreModels);
 
-        detector.release();
     }
 
     @Override

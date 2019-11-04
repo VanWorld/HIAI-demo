@@ -2,14 +2,11 @@ package com.tys.hiai.aesthetic;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.huawei.hiai.vision.common.ConnectionCallback;
 import com.huawei.hiai.vision.common.VisionBase;
 import com.huawei.hiai.vision.image.detector.AestheticsScoreDetector;
-import com.huawei.hiai.vision.visionkit.image.detector.AEModelConfiguration;
-import com.tys.hiai.MainActivity;
 import com.tys.hiai.util.HiAILog;
 
 public class VisionConnectionCallback implements ConnectionCallback {
@@ -30,7 +27,7 @@ public class VisionConnectionCallback implements ConnectionCallback {
                     HiAILog.i("this device support aesthetic detect");
                 } else {
                     HiAILog.i("this device dose not support aesthetic detect!");
-                    Toast.makeText(mContext, " 无法启动美学评分引擎，不能进行评分操作，所有照片均为零分", Toast.LENGTH_LONG);
+                    Toast.makeText(mContext, " 无法启动美学评分引擎，不能进行评分操作，所有照片均为零分", Toast.LENGTH_LONG).show();
                     VisionBase.destroy();
                 }
                 detector.release();
