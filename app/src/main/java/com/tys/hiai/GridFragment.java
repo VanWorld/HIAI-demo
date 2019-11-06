@@ -3,6 +3,7 @@ package com.tys.hiai;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
+import android.content.res.AssetManager;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,6 +12,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,6 +26,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.AppBarLayout;
@@ -71,6 +76,9 @@ public class GridFragment extends Fragment {
         initToolbar(gridView);
         initRecyclerView(gridView);
         refreshUI(new LinkedList<>());
+//        initDescription(gridView);
+        initBackgroundView(gridView);
+
 
         AestheticScoreViewModel model = ViewModelProviders.of(getActivity()).get(AestheticScoreViewModel.class);
         model.getScores().observe(getActivity(), new Observer<LinkedList<ScoreModel>>() {
@@ -185,6 +193,24 @@ public class GridFragment extends Fragment {
             mAdapter.setScoreModels(scoreModels);
             mAdapter.notifyDataSetChanged();
         }
+    }
+
+    /**
+     *
+     */
+    private void initDescription(@NonNull View view) {
+        TextView descriptionView = view.findViewById(R.id.description);
+        SpannableStringBuilder ssb = new SpannableStringBuilder();
+        String des = getContext().getResources().getString(R.string.description);
+        ssb.append(des);
+        ImageSpan imageSpan = new ImageSpan(getContext(), R.drawable.ic_select_picture);
+        ssb.setSpan(imageSpan, 2, 3, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
+        descriptionView.setText(ssb);
+    }
+
+    private void initBackgroundView(View view) {
+        ImageView descriptionImageView = view.findViewById(R.id.descriptionView);
+        Glide.with(getContext()).asGif().load("file:///android_asset/yanjin.gif").into(descriptionImageView);
     }
 
     /**

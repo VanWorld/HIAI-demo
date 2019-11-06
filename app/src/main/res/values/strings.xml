@@ -16,4 +16,6 @@
     <string name="delete_confirm">确定</string>
     <string name="delete_cancel">取消</string>
     <string name="delete_confirm_message">已删除%d张照片</string>
+
+    <string name="description">点击 选择图片，每次最多选择九张</string>
 </resources>
