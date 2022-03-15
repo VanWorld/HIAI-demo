@@ -52,6 +52,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 public class GridFragment extends Fragment {
     private View gridView;
@@ -96,13 +97,45 @@ public class GridFragment extends Fragment {
         super.onCreateOptionsMenu(menu, menuInflater);
         menuInflater.inflate(R.menu.hiai_toolbar_menu, menu);
         selectPictureMenu = menu.findItem(R.id.select_picture);
-        selectPictureMenu.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        ImageView spmAv = (ImageView) selectPictureMenu.getActionView();
+        spmAv.setImageResource(R.drawable.ic_select_picture);
+        spmAv.setPadding(0, 0, 16, 0);
+        spmAv.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            public void onClick(View v) {
+                if (!((MainActivity)getActivity()).isCanDetect()) {
+                    Toast.makeText(getActivity(), "无法启动美学评分引擎，不能进行评分操作，所有照片均为零分", Toast.LENGTH_LONG).show();
+                }
+
+                ImageView descriptionView = gridView.findViewById(R.id.descriptionView);
+                descriptionView.setVisibility(View.GONE);
                 selectPhotoByMatisse();
-                return true;
             }
         });
+//        selectPictureMenu.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//            @Override
+//            public boolean onMenuItemClick(MenuItem item) {
+//                if (!((MainActivity)getActivity()).isCanDetect()) {
+//                    Toast.makeText(getActivity(), "无法启动美学评分引擎，不能进行评分操作，所有照片均为零分", Toast.LENGTH_LONG).show();
+//                    return true;
+//                }
+//
+//                ImageView descriptionView = gridView.findViewById(R.id.descriptionView);
+//                descriptionView.setVisibility(View.GONE);
+//                selectPhotoByMatisse();
+//                return true;
+//            }
+//        });
+//        HiAILog.i(selectPictureMenu.getActionView() + "");
+        new MaterialShowcaseView.Builder(getActivity())
+                .setTarget(selectPictureMenu.getActionView())
+//                .setGravity(1000)
+                .setShapePadding(16)
+                .setDismissText("知道了")
+                .setContentText("点击选择照片")
+                .setDelay(1) // optional but starting animations immediately in onCreate can make them choppy
+                .singleUse("hshsdfjsdghfjsdjfgsjdfghjsds") // provide a unique ID used to ensure it is only shown once
+                .show();
 
         deleteMenu = menu.findItem(R.id.delete);
         deleteMenu.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -193,6 +226,12 @@ public class GridFragment extends Fragment {
             mAdapter.setScoreModels(scoreModels);
             mAdapter.notifyDataSetChanged();
         }
+
+        if (scoreModels == null || scoreModels.size() == 0) {
+            ImageView descriptionView = gridView.findViewById(R.id.descriptionView);
+            descriptionView.setVisibility(View.VISIBLE);
+        }
+
     }
 
     /**

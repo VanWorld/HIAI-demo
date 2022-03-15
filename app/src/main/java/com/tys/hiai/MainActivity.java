@@ -10,15 +10,16 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.widget.Toast;
 
+import com.huawei.hiai.vision.common.ConnectionCallback;
 import com.huawei.hiai.vision.common.VisionBase;
 import com.huawei.hiai.vision.image.detector.AestheticsScoreDetector;
 import com.huawei.hiai.vision.visionkit.common.Frame;
 import com.huawei.hiai.vision.visionkit.image.detector.AestheticsScore;
-import com.tys.hiai.aesthetic.VisionConnectionCallback;
+import com.tys.hiai.GridFragment.ScoreModel;
 import com.tys.hiai.model.score.AestheticScoreViewModel;
 import com.tys.hiai.util.HiAILog;
-import com.tys.hiai.GridFragment.ScoreModel;
 import com.zhihu.matisse.Matisse;
 
 import org.json.JSONObject;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProviders;
@@ -45,7 +47,10 @@ public class MainActivity extends AppCompatActivity {
 
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE };
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    private boolean canDetect = false;
+    private AestheticsScoreDetector detector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
                     .add(R.id.container, new GridFragment())
                     .commit();
         }
+        HiAILog.i("is connect" + this.canDetect);
     }
 
     public static void verifyStoragePermissions(Activity activity) {
@@ -74,14 +80,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initVisionBaseInit() {
-        VisionConnectionCallback cb = new VisionConnectionCallback(MainActivity.this);
-        VisionBase.init(MainActivity.this, cb);
+        VisionBase.init(MainActivity.this, new ConnectionCallback() {
+            @Override
+            public void onServiceConnect() {
+                HiAILog.i("service connect");
+                detector = new AestheticsScoreDetector(MainActivity.this);
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... voids) {
+                        if (detector.prepare() == 0) {
+                            canDetect = true;
+                            HiAILog.i("this device support aestheticsScores");
+                        } else {
+                            HiAILog.i("this device does not support aestheticsScores");
+                        }
+                        return null;
+                    }
+                }.execute();
+
+            }
+
+            @Override
+            public void onServiceDisconnect() {
+
+            }
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == REQUEST_CODE_CHOOSE && resultCode == RESULT_OK) {
             List<String> uris = Matisse.obtainPathResult(data);
             if (uris != null && uris.size() > 0) {
@@ -96,6 +124,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 score(scoreModels.toArray(new ScoreModel[]{}));
             }
+        } else {
+            AestheticScoreViewModel model = ViewModelProviders.of(MainActivity.this).get(AestheticScoreViewModel.class);
+            model.getScores().setValue(new LinkedList<ScoreModel>());
         }
     }
 
@@ -113,15 +144,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void score(ScoreModel... scoreModels) {
-        for (ScoreModel item : scoreModels) {
-            HiAILog.i("item: " + item);
-        }
-
         new AsyncTask<ScoreModel, Integer, LinkedList<ScoreModel>>() {
             @Override
             protected LinkedList<ScoreModel> doInBackground(ScoreModel... scoreModels) {
                 LinkedList<ScoreModel> result = new LinkedList<>();
-                AestheticsScoreDetector detector = new AestheticsScoreDetector(MainActivity.this);
                 for (ScoreModel item : scoreModels) {
                     Frame frame = new Frame();
                     frame.setBitmap(item.getBitmap());
@@ -146,12 +172,19 @@ public class MainActivity extends AppCompatActivity {
                 model.getScores().setValue(result);
             }
         }.execute(scoreModels);
-
     }
 
     @Override
     protected void onDestroy() {
         VisionBase.destroy();
         super.onDestroy();
+    }
+
+    public boolean isCanDetect() {
+        return canDetect;
+    }
+
+    public void setCanDetect(boolean canDetect) {
+        this.canDetect = canDetect;
     }
 }

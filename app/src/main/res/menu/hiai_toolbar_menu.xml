@@ -6,7 +6,8 @@
         android:enabled="true"
         android:icon="@drawable/ic_select_picture"
         android:title="@string/hiai_select_picture"
-        app:showAsAction="always" />
+        app:showAsAction="always"
+        app:actionViewClass="android.widget.ImageView"/>
     <item
         android:id="@+id/delete"
         android:enabled="true"

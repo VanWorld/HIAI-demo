@@ -27,6 +27,7 @@ local.properties
 build/
 app/build
 app/release
+app/debug
 
 # Local configuration file (sdk path, etc)
 local.properties
